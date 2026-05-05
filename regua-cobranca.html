@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Régua de Cobrança Solaris</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#ffffff;--bg2:#f5f5f3;--bg3:#ebebea;
+  --text:#1a1a18;--text2:#6b6a65;--text3:#9c9a93;
+  --border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.20);
+  --blue:#185FA5;--blue-bg:#e6f1fb;--blue-txt:#0c447c;
+  --green-bg:#eaf3de;--green-txt:#3b6d11;
+  --amber-bg:#faeeda;--amber-txt:#854f0b;
+  --red-bg:#fcebeb;--red-txt:#a32d2d;
+  --radius:8px;
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg2);color:var(--text);
+  min-height:100vh;padding:2.5rem 1rem;
+}
+
+.page{max-width:620px;margin:0 auto;}
+
+.page-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:12px;}
+.page-hdr h1{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.02em;}
+.page-hdr p{font-size:12px;color:var(--text2);}
+.hdr-btns{display:flex;gap:6px;flex-shrink:0;padding-top:4px;}
+
+.btn{font-size:12px;padding:6px 13px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text2);cursor:pointer;font-family:inherit;transition:background .12s;}
+.btn:hover{background:var(--bg3);}
+.btn.prim{background:var(--blue);color:#fff;border-color:transparent;}
+.btn.prim:hover{opacity:.88;}
+
+.phases-cfg{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center;}
+.ph-card{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);font-size:12px;box-shadow:var(--shadow);}
+.ph-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.d0{background:#1D9E75;}.d1{background:#BA7517;}.d2{background:#A32D2D;}
+.ph-card label{color:var(--text2);white-space:nowrap;}
+.ph-card input[type=number]{width:46px;font-size:12px;font-weight:700;border:none;border-bottom:1px dashed var(--border2);background:transparent;outline:none;color:var(--text);text-align:center;padding:0 2px;font-family:inherit;}
+.ph-card input:focus{border-bottom-color:var(--blue);}
+.phases-hint{font-size:11px;color:var(--text3);}
+
+.tl{position:relative;padding-left:80px;}
+.tl-line{position:absolute;left:31px;top:0;bottom:20px;width:2px;background:var(--border2);border-radius:1px;}
+.tl-arrow{position:absolute;left:27px;bottom:0;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid var(--border2);}
+
+.ph-sep{display:flex;align-items:center;gap:8px;margin:6px 0;}
+.ph-sep-line{flex:1;height:1px;background:var(--border);}
+.ph-badge{font-size:10px;padding:2px 10px;border-radius:20px;font-weight:600;white-space:nowrap;}
+.ph0{background:var(--green-bg);color:var(--green-txt);}
+.ph1{background:var(--amber-bg);color:var(--amber-txt);}
+.ph2{background:var(--red-bg);color:var(--red-txt);}
+
+.ev-row{position:relative;display:flex;align-items:flex-start;}
+.ev-dot{position:absolute;left:-51px;top:14px;width:12px;height:12px;border-radius:50%;background:var(--blue);border:2.5px solid var(--bg2);box-shadow:0 0 0 1.5px var(--blue);z-index:2;}
+.ev-day{position:absolute;left:-76px;top:16px;width:22px;font-size:10px;font-weight:700;color:var(--blue);text-align:right;white-space:nowrap;}
+
+.ev-card{flex:1;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);box-shadow:var(--shadow);overflow:hidden;transition:border-color .15s;}
+.ev-card:hover{border-color:var(--border2);}
+.ev-card.active{border-color:var(--blue);box-shadow:0 0 0 3px rgba(23,95,165,.1);}
+
+.cv{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;}
+.cv-icon{font-size:16px;flex-shrink:0;line-height:1;}
+.cv-body{flex:1;min-width:0;}
+.cv-label{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cv-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+.cv-acts{display:flex;gap:4px;opacity:0;transition:opacity .15s;flex-shrink:0;}
+.ev-card:hover .cv-acts{opacity:1;}
+.cv-edit{font-size:11px;padding:3px 9px;border-radius:5px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit;}
+.cv-edit:hover{background:var(--blue-bg);color:var(--blue-txt);border-color:transparent;}
+.cv-del{font-size:11px;padding:3px 7px;border-radius:5px;border:1px solid rgba(163,45,45,.3);background:transparent;color:var(--red-txt);cursor:pointer;font-family:inherit;}
+.cv-del:hover{background:var(--red-bg);}
+
+.ce{padding:12px 14px;display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--border);}
+.ce-row{display:flex;align-items:center;gap:10px;}
+.ce-lbl{font-size:11px;color:var(--text2);width:80px;flex-shrink:0;}
+.ce input[type=text],.ce input[type=number],.ce select{flex:1;font-size:13px;padding:6px 9px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;font-family:inherit;}
+.ce input[type=number]{flex:none;width:88px;}
+.ce input:focus,.ce select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(23,95,165,.1);}
+.ce-foot{display:flex;justify-content:flex-end;gap:8px;padding-top:6px;border-top:1px solid var(--border);}
+.ce-save{font-size:12px;padding:6px 16px;border-radius:var(--radius);border:none;background:var(--blue);color:#fff;cursor:pointer;font-weight:600;font-family:inherit;}
+.ce-save:hover{opacity:.88;}
+.ce-cancel{font-size:12px;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;}
+.ce-cancel:hover{background:var(--bg2);}
+
+.add-row{margin-top:16px;}
+.add-btn{font-size:12px;padding:8px;border-radius:var(--radius);border:1px dashed var(--border2);background:transparent;color:var(--text2);cursor:pointer;width:100%;font-family:inherit;transition:background .12s;}
+.add-btn:hover{background:var(--bg);}
+
+@media print{
+  body{background:#fff;padding:.5rem;}
+  .hdr-btns,.phases-cfg,.cv-acts,.add-row{display:none!important;}
+  .ev-card{box-shadow:none;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-hdr">
+    <div>
+      <h1>Régua de Cobrança Solaris</h1>
+      <p>Clique em um evento para editar · Ajuste o dia de início de cada fase</p>
+    </div>
+    <div class="hdr-btns">
+      <button class="btn" onclick="addEvent()">+ Evento</button>
+      <button class="btn" onclick="window.print()">Imprimir</button>
+      <button class="btn prim" onclick="exportar()">Exportar ↗</button>
+    </div>
+  </div>
+
+  <div class="phases-cfg">
+    <div class="ph-card">
+      <div class="ph-dot d0"></div>
+      <label>Amigável a partir de D</label>
+      <input type="number" value="0" min="0" oninput="updatePhase(0,this.value)">
+    </div>
+    <div class="ph-card">
+      <div class="ph-dot d1"></div>
+      <label>Extrajudicial a partir de D</label>
+      <input type="number" value="10" min="0" oninput="updatePhase(1,this.value)">
+    </div>
+    <div class="ph-card">
+      <div class="ph-dot d2"></div>
+      <label>Judicial a partir de D</label>
+      <input type="number" value="25" min="0" oninput="updatePhase(2,this.value)">
+    </div>
+    <span class="phases-hint">Altere o dia para reposicionar as faixas</span>
+  </div>
+
+  <div class="tl">
+    <div class="tl-line"></div>
+    <div class="tl-arrow"></div>
+    <div id="evlist"></div>
+    <div class="add-row">
+      <button class="add-btn" onclick="addEvent()">+ Adicionar evento</button>
+    </div>
+  </div>
+
+</div>
+<script>
+const ICONS={vencimento:'📄',whatsapp:'💬',telefone:'📞',email:'📧',sms:'✉️',spc:'🔴',desligamento:'⚡',juridico:'⚖️',visita:'🚪',default:'📌'};
+const ILABELS={vencimento:'Fatura',whatsapp:'WhatsApp',telefone:'Telefone',email:'E-mail',sms:'SMS',spc:'SPC/SERASA',desligamento:'Desligamento',juridico:'Jurídico',visita:'Visita',default:'Outro'};
+
+let phases=[
+  {label:'Cobrança amigável',cls:'ph0',from:0},
+  {label:'Cobrança extrajudicial',cls:'ph1',from:10},
+  {label:'Cobrança judicial',cls:'ph2',from:25},
+];
+let events=[
+  {id:1,day:0, label:'Vencimento da fatura',         sub:'',                  icon:'vencimento'},
+  {id:2,day:2, label:'Reaviso de vencimento',         sub:'WhatsApp',          icon:'whatsapp'},
+  {id:3,day:5, label:'Tele-cobrança',                 sub:'Ligação ao cliente',icon:'telefone'},
+  {id:4,day:10,label:'Negativação SPC/SERASA',         sub:'',                  icon:'spc'},
+  {id:5,day:15,label:'Aviso de desligamento de usina', sub:'WhatsApp',          icon:'whatsapp'},
+  {id:6,day:20,label:'Desligamento de usina',          sub:'',                  icon:'desligamento'},
+  {id:7,day:30,label:'Cobrança jurídica',              sub:'Ação de execução',  icon:'juridico'},
+];
+let nextId=8,editingId=null,draft={};
+
+function updatePhase(i,v){phases[i].from=parseInt(v)||0;render();}
+function phaseFor(d){for(let i=phases.length-1;i>=0;i--)if(d>=phases[i].from)return i;return 0;}
+
+function startEdit(id){
+  const ev=events.find(e=>e.id===id);if(!ev)return;
+  draft={...ev};editingId=id;render();
+  setTimeout(()=>{const el=document.getElementById('il'+id);if(el){el.focus();el.select();}},40);
+}
+function cancelEdit(){editingId=null;draft={};render();}
+function saveEdit(id){
+  const ev=events.find(e=>e.id===id);
+  if(ev)Object.assign(ev,draft);
+  editingId=null;draft={};render();
+}
+function deleteEvent(id){
+  if(!confirm('Remover este evento?'))return;
+  events=events.filter(e=>e.id!==id);
+  if(editingId===id){editingId=null;draft={};}
+  render();
+}
+function addEvent(){
+  events.sort((a,b)=>a.day-b.day);
+  const last=events.length?Math.max(...events.map(e=>e.day)):0;
+  const ev={id:nextId++,day:last+5,label:'Novo evento',sub:'',icon:'default'};
+  events.push(ev);draft={...ev};editingId=ev.id;render();
+  setTimeout(()=>{const el=document.getElementById('il'+ev.id);if(el){el.focus();el.select();}},40);
+}
+function exportar(){
+  events.sort((a,b)=>a.day-b.day);
+  const pl=phases.map(p=>'# '+p.label+' (a partir de D'+p.from+')').join('\n');
+  const el=events.map(e=>'D'+e.day+'\t'+e.label+(e.sub?' ('+e.sub+')':'')).join('\n');
+  const b=new Blob([pl+'\n\n'+el],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='regua-cobranca.txt';a.click();
+}
+
+function render(){
+  events.sort((a,b)=>a.day-b.day);
+  const c=document.getElementById('evlist');
+  let h='',lastPh=-1;
+  events.forEach((ev,i)=>{
+    const ph=phaseFor(ev.day);
+    if(ph!==lastPh){
+      lastPh=ph;const p=phases[ph];
+      h+=`<div class="ph-sep"><div class="ph-sep-line"></div><span class="ph-badge ${p.cls}">${p.label}</span><div class="ph-sep-line"></div></div>`;
+    }
+    const prev=i>0?events[i-1].day:ev.day;
+    const gap=i===0?4:Math.min(Math.max((ev.day-prev)*3.5,10),60);
+    const isEd=editingId===ev.id;
+    const d=isEd?draft:ev;
+    const icon=ICONS[ev.icon]||'📌';
+    h+=`<div class="ev-row" style="margin-top:${gap}px"><div class="ev-dot"></div><div class="ev-day">D${d.day}</div><div class="ev-card${isEd?' active':''}" id="c${ev.id}">`;
+    if(isEd){
+      let opts='';Object.keys(ICONS).forEach(k=>{opts+=`<option value="${k}"${d.icon===k?' selected':''}>${ICONS[k]} ${ILABELS[k]}</option>`;});
+      h+=`<div class="cv" style="border-bottom:1px solid var(--border);cursor:default">
+        <span class="cv-icon">${icon}</span>
+        <div class="cv-body"><div class="cv-label">${ev.label}</div>${ev.sub?`<div class="cv-sub">${ev.sub}</div>`:''}</div>
+      </div>
+      <div class="ce">
+        <div class="ce-row"><span class="ce-lbl">Dia</span><input type="number" min="0" value="${d.day}" oninput="draft.day=parseInt(this.value)||0"></div>
+        <div class="ce-row"><span class="ce-lbl">Evento</span><input type="text" id="il${ev.id}" value="${d.label}" placeholder="Nome do evento" oninput="draft.label=this.value"></div>
+        <div class="ce-row"><span class="ce-lbl">Canal / obs.</span><input type="text" value="${d.sub}" placeholder="Ex: WhatsApp, e-mail…" oninput="draft.sub=this.value"></div>
+        <div class="ce-row"><span class="ce-lbl">Ícone</span><select onchange="draft.icon=this.value">${opts}</select></div>
+        <div class="ce-foot"><button class="ce-cancel" onclick="cancelEdit()">Cancelar</button><button class="ce-save" onclick="saveEdit(${ev.id})">Salvar</button></div>
+      </div>`;
+    }else{
+      h+=`<div class="cv" onclick="startEdit(${ev.id})">
+        <span class="cv-icon">${icon}</span>
+        <div class="cv-body"><div class="cv-label">${ev.label}</div>${ev.sub?`<div class="cv-sub">${ev.sub}</div>`:''}</div>
+        <div class="cv-acts">
+          <button class="cv-edit" onclick="event.stopPropagation();startEdit(${ev.id})">Editar</button>
+          <button class="cv-del" onclick="event.stopPropagation();deleteEvent(${ev.id})">✕</button>
+        </div>
+      </div>`;
+    }
+    h+=`</div></div>`;
+  });
+  c.innerHTML=h;
+}
+render();
+</script>
+</body>
+</html>
